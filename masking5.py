@@ -47,7 +47,7 @@ def mask_data(data, classifications):
 
     return data
 
-sample_data = "Sensitive data here: 123456789012, and an email: example@example.com"
+sample_data = input("Enter the Sensitive Data: ")
 
 masked_data = mask_data(sample_data, classifications)
 
