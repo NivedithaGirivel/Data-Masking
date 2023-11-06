@@ -1,32 +1,54 @@
-import re
 import random
+import re
 import json
+with open('sensitive_data_patterns.json') as f:
+    classifications = json.load(f)
+class MetaLearner:
+    def __init__(self):
+        self.trained = False
 
-def load_sensitive_data_patterns():
-    with open('sensitive_data_patterns.json') as file:
-        return json.load(file)
+    def is_trained(self):
+        return self.trained
 
-def mask_sensitive_data(data, sensitive_data_patterns):
-    masked_output = list(data)  # Convert to a list for faster replacement
+    def train(self, data, classifications):
+        self.trained = True
 
-    for pattern_data in sensitive_data_patterns:
-        pattern = re.compile(pattern_data['pattern'])
-        sensitivity_level = pattern_data['sensitivity']
-        for i, char in enumerate(masked_output):
-            match = pattern.search(''.join(masked_output[i:]))  # Search for a match from the current position
-            if match:
-                start, end = match.start() + i, match.end() + i
-                if sensitivity_level == 'high':
-                    masked_output[start:end] = ['*'] * (end - start)
-                else:
-                    sample = random.sample(masked_output[start:end], end - start)
-                    masked_output[start:end] = sample
+    def predict(self, classification):
+        return "dynamic" if classification["sensitivity"] == "low" else "adaptive"
+meta_learner = MetaLearner()
+def dynamic_mask(data):
 
-    return ''.join(masked_output)  # Convert the list back to a string
+    jumbled_data = ''.join(random.sample(data, len(data)))
+    return jumbled_data
+def adaptive_mask(data):
 
-user_paragraph = input("Enter the paragraph containing sensitive data: ")
-sensitive_data_patterns = load_sensitive_data_patterns()
-masked_output = mask_sensitive_data(user_paragraph, sensitive_data_patterns)
+    masked_data = '*' * len(data)
+    return masked_data
+def mask_data(data, classifications):
+    if not meta_learner.is_trained():
+        meta_learner.train(data, classifications)
+    replacements = []
+    classifications.sort(key=lambda c: len(c["pattern"]), reverse=True)
 
-print("Masked Output:")
-print(masked_output)
+    for match in re.finditer("|".join([c["pattern"] for c in classifications]), data):
+        original_text = match.group(0)
+        classification = next(c for c in classifications if re.match(c["pattern"], original_text))
+        masking_algorithm = meta_learner.predict(classification)
+        if masking_algorithm == "dynamic":
+            masked_text = dynamic_mask(original_text)
+        else:
+            masked_text = adaptive_mask(original_text)
+
+        replacements.append((match.start(), match.end(), masked_text))
+
+    replacements.sort(key=lambda x: x[0], reverse=True)
+    for start, end, masked_text in replacements:
+        data = data[:start] + masked_text + data[end:]
+
+    return data
+
+sample_data = "Sensitive data here: 123456789012, and an email: example@example.com"
+
+masked_data = mask_data(sample_data, classifications)
+
+print(masked_data)
