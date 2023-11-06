@@ -47,8 +47,8 @@ def mask_data(data, classifications):
 
     return data
 
-sample_data = input("Enter the Sensitive Data: ")
+sample_data = input("Enter the Data: ")
 
 masked_data = mask_data(sample_data, classifications)
-
+print("Masked Data:")
 print(masked_data)
