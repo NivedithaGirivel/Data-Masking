@@ -64,11 +64,11 @@ def mask_data(data, classifications):
     return data
 
 # User authentication
-username = input("Enter Username: ")
+
 
 # Get user input for data to be masked
 sample_data = input("Enter the Data: ")
-
+username = input("Enter Username: ")
 # Check user access and mask the data accordingly
 if username in ["user1", "user2", "user3", "admin"]:
     # Admin sees unmasked original data
